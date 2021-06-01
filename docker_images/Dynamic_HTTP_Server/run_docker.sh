@@ -1,4 +1,4 @@
 #!/bin/bash
 
-docker run -d res/dynamic_http_server
+docker run -d --name express_dynamic res/dynamic_http_server
 

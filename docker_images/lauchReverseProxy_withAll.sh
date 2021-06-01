@@ -16,4 +16,4 @@ cd ..
 cd Reverse_Proxy
 
 docker build -t res/reverse_proxy .
-docker run -p 8080:80 res/reverse_proxy
+docker run -p 8080:80 --name apache_reverseproxy res/reverse_proxy

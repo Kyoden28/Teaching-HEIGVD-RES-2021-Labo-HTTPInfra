@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker run -d res/static_http_server
+docker run -d --name apache_static res/static_http_server
