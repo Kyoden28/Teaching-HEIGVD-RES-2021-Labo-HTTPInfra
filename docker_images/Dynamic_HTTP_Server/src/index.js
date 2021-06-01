@@ -10,7 +10,7 @@ var express = require('express');
 var dummyjson = require('dummy-json');
 var app = express();
 
-app.get('/generatePerson',function(req,res){
+app.get('/',function(req,res){
 	res.send(generateFivePeople());
 });
 

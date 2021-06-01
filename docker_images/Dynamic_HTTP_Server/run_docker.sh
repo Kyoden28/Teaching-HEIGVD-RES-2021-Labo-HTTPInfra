@@ -1,4 +1,4 @@
 #!/bin/bash
 
-docker run -d -p 3000:3000 res/dynamic_http_server
+docker run -d res/dynamic_http_server
 
