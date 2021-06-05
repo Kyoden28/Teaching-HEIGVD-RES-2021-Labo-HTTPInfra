@@ -1,5 +1,11 @@
 # Teaching-HEIGVD-RES-2021-Labo-HTTPInfra
 
+Auteurs : Christian Gomes & Johann Werkle
+
+Date : 05.06.2021
+
+
+
 ## Objectives
 
 The first objective of this lab is to get familiar with software tools that will allow us to build a **complete web infrastructure**. By that, we mean that we will build an environment that will allow us to serve **static and dynamic content** to web browsers. To do that, we will see that the **apache httpd server** can act both as a **HTTP server** and as a **reverse proxy**. We will also see that **express.js** is a JavaScript framework that makes it very easy to write dynamic web apps.
@@ -22,89 +28,143 @@ The third objective is to practice our usage of **Docker**. All the components o
 * The report must contain the procedure that you have followed to prove that your configuration is correct (what you would do if you were doing a demo).
 * Check out the **due dates** on the main repo for the course.
 
+## Etape 1: Static HTTP server with apache httpd
 
-## Step 1: Static HTTP server with apache httpd
+Cette étape consiste à la création d'un serveur HTTP statique. Le but est de dockériser une image apache, où nous avons décidé d'utiliser la version 8.0. Nous sommes partis d'une image php trouvé sur le site 
 
-### Webcasts
+[dockerhub]: https://hub.docker.com/_/php
 
-* [Labo HTTP (1): Serveur apache httpd "dockerisé" servant du contenu statique](https://www.youtube.com/watch?v=XFO4OmcfI3U)
+Le dossier **Static_HTTP_Server** contient les fichiers nécessaires à cette partie. 
 
-### Acceptance criteria
+Le dossier **src** contient les fichiers necéssaires pour la page html qui sera copié dans le répertoire /var/www/html du container.
 
-* You have a GitHub repo with everything needed to build the Docker image.
-* You can do a demo, where you build the image, run a container and access content from a browser.
-* You have used a nice looking web template, different from the one shown in the webcast.
-* You are able to explain what you do in the Dockerfile.
-* You are able to show where the apache config files are located (in a running container).
-* You have **documented** your configuration in your report.
+Deux scripts sont présents afin de lancer l'image : 
 
-## Step 2: Dynamic HTTP server with express.js
+build_image_docker.sh permet de build avec un tag défini. 
 
-### Webcasts
+```bash
+docker build --tag  res/static_http_server .
+```
 
-* [Labo HTTP (2a): Application node "dockerisée"](https://www.youtube.com/watch?v=fSIrZ0Mmpis)
-* [Labo HTTP (2b): Application express "dockerisée"](https://www.youtube.com/watch?v=o4qHbf_vMu0)
+run_docker.sh permet de démarrer en background le container. 
 
-### Acceptance criteria
+```bash
+docker run -d --name apache_static res/static_http_server
+```
 
-* You have a GitHub repo with everything needed to build the Docker image.
-* You can do a demo, where you build the image, run a container and access content from a browser.
-* You generate dynamic, random content and return a JSON payload to the client.
-* You cannot return the same content as the webcast (you cannot return a list of people).
-* You don't have to use express.js; if you want, you can use another JavaScript web framework or event another language.
-* You have **documented** your configuration in your report.
+Pour la partie 1 et afin de faciliter l'accès à la page HTML que nous avons modifié pour la démonstration, on peut lancer le script de cette manière et accèder en 
+
+[localhost]: http://localhost:8080/
+
+sur le port 8080. 
+
+```bash
+docker run -d -p 8080:80 --name apache_static res/static_http_server
+```
+
+**Exemple :** 
+
+![](img/static_demo.PNG)
+
+## Etape 2: Dynamic HTTP server with express.js
+
+Cette étape consiste à la création d'un serveur HTTP dynamique avec l'utilisation du framework express.js qui est utile à la construction d'application web basées sur node.js. L'objectif est de retourner une liste aleatoire d'objets en json utiles aux prochaines étapes. Nous utilisons dans le Dockerfile la dernière image de node avec node:latest.
+
+Nous avons utilisé **dummy-json** pour cela. Plus d'informations sur ce 
+
+[github]: https://github.com/webroo/dummy-json
+
+. 
+
+On génére simplement 5 personnes avec les données "Firstname,Lastname,Age,Company,Email,Street,City et Country" en json. 
+
+Le dossier **Dynamic_HTTP_Server** contient les fichiers nécessaires à cette partie. 
+
+Le dossier **src** contient les fichiers necéssaires qui seront copiés sur le container pour la génération de cette page. 
+
+Deux scripts sont présents afin de lancer l'image : 
+
+build_image_docker.sh permet de build avec un tag défini. 
+
+```bash
+docker build --tag  res/dynamic_http_server .
+```
+
+run_docker.sh permet de démarrer en background le container. 
+
+```bash
+docker run -d --name express_dynamic res/dynamic_http_server
+```
+
+Pour la partie 2 et afin de faciliter l'accès aux données que nous générons pour la démonstration, on peut lancer le script de cette manière et accèder en 
+
+[localhost]: http://localhost:3000/
+
+sur le port 3000. 
+
+```bash
+docker run -d -p 3000:3000 --name express_dynamic res/dynamic_http_server
+```
+
+**Exemple :** 
+
+![](img/dynamic_demo.png)
 
 
 ## Step 3: Reverse proxy with apache (static configuration)
 
-### Webcasts
+Cette étape consiste à la création d'un reverse proxy où le but est d'avoir accès au serveur statique et au serveur dynamique via le reverse proxy. L'objectif par rapport aux deux étapes précédentes sera de ne pas utiliser de port mapping pour l'accès au container mais uniquement via le reverse proxy.
 
-* [Labo HTTP (3a): reverse proxy apache httpd dans Docker](https://www.youtube.com/watch?v=WHFlWdcvZtk)
-* [Labo HTTP (3b): reverse proxy apache httpd dans Docker](https://www.youtube.com/watch?v=fkPwHyQUiVs)
-* [Labo HTTP (3c): reverse proxy apache httpd dans Docker](https://www.youtube.com/watch?v=UmiYS_ObJxY)
+L'accès à l'étape 1 et 2 se fera via le lien labores.demo.ch qui a été configuré pour accèder à la partie : 
+
+Statique via : labores.demo.ch:8080/
+
+Dynamique via : labores.demo.ch:8080/api/people/
+
+Le dossier **Reverse_Proxy** contient les fichiers nécessaires à cette partie. 
+
+Le dossier **conf** contient la configuration nécessaire au proxy notamment avec le fichier 001-reverse-proxy.conf 
+
+**Remarque :**  Les adresses IP sont hardcodées dans le fichier de configuration , il est donc necéssaire de vérifier qu'au lancement des containers, celle-ci correspondent aux fichiers de configuration. 
 
 
-### Acceptance criteria
 
-* You have a GitHub repo with everything needed to build the Docker image for the container.
-* You can do a demo, where you start from an "empty" Docker environment (no container running) and where you start 3 containers: static server, dynamic server and reverse proxy; in the demo, you prove that the routing is done correctly by the reverse proxy.
-* You can explain and prove that the static and dynamic servers cannot be reached directly (reverse proxy is a single entry point in the infra). 
-* You are able to explain why the static configuration is fragile and needs to be improved.
-* You have **documented** your configuration in your report.
+Un script est présent qui lance les containers dans l'ordre (à lancer dans le dossier docker_images)
+
+> ./lauchReverseProxy_withAll.sh
+
+Pour la démonstration il suffit de lancer ce script.
+
+**Exemple :** 
+
+![](img/reverse_demo.jpg)
 
 
 ## Step 4: AJAX requests with JQuery
 
-### Webcasts
+Cette étape consiste à l'ajout d'un script js afin que dans la page html, une génération de données soient affichées toutes les 5 secondes. Nous avons affichement simplement nom, prénom , âge et adresse mail de  la personne générée.
 
-* [Labo HTTP (4): AJAX avec JQuery](https://www.youtube.com/watch?v=fgpNEbgdm5k)
+Pour cela il a fallu modifier : 
 
-### Acceptance criteria
+Dans le dossier Static_HTTP_Server/src , le fichier index.html afin d'inclure le script js/people.js.
 
-* You have a GitHub repo with everything needed to build the various images.
-* You can do a complete, end-to-end demonstration: the web page is dynamically updated every few seconds (with the data coming from the dynamic backend).
-* You are able to prove that AJAX requests are sent by the browser and you can show the content of th responses.
-* You are able to explain why your demo would not work without a reverse proxy (because of a security restriction).
-* You have **documented** your configuration in your report.
+![](img/include_script.jpg)
+
+Dans le dossier Static_HTTP_Server/src/js , réaliser le script people.js. 
+
+**Exemple :** 
+
+![](img/ajax_demo.jpg)
 
 ## Step 5: Dynamic reverse proxy configuration
 
-### Webcasts
+Cette partie concerne le problème d'adresse IP hardcodé qui n'est pas viable dans un envirronnement de production. Nous voulons changer les adresses IP, sans modifier trop de configurations. Pour cela, nous allons utiliser un système de variable d'envirronnement qui lors du lancement du container nous permet d'indiquer clairement les adresses utiles.
 
-* [Labo HTTP (5a): configuration dynamique du reverse proxy](https://www.youtube.com/watch?v=iGl3Y27AewU)
-* [Labo HTTP (5b): configuration dynamique du reverse proxy](https://www.youtube.com/watch?v=lVWLdB3y-4I)
-* [Labo HTTP (5c): configuration dynamique du reverse proxy](https://www.youtube.com/watch?v=MQj-FzD-0mE)
-* [Labo HTTP (5d): configuration dynamique du reverse proxy](https://www.youtube.com/watch?v=B_JpYtxoO_E)
-* [Labo HTTP (5e): configuration dynamique du reverse proxy](https://www.youtube.com/watch?v=dz6GLoGou9k)
+Dans l'étape précédente, la configuration du reverse proxy était le fichier **001-reverse-proxy.conf**. Ici nous allons créer ce fichier de configuration à l'aide d'un script php. 
 
-### Acceptance criteria
+Ce fichier se trouve dans Revese_Proxy/template/config-template.php. Celui-ci va permettre de récupèrer les variables d'envirronement crée au moment du lancement du container. 
 
-* You have a GitHub repo with everything needed to build the various images.
-* You have found a way to replace the static configuration of the reverse proxy (hard-coded IP adresses) with a dynamic configuration.
-* You may use the approach presented in the webcast (environment variables and PHP script executed when the reverse proxy container is started), or you may use another approach. The requirement is that you should not have to rebuild the reverse proxy Docker image when the IP addresses of the servers change.
-* You are able to do an end-to-end demo with a well-prepared scenario. Make sure that you can demonstrate that everything works fine when the IP addresses change!
-* You are able to explain how you have implemented the solution and walk us through the configuration and the code.
-* You have **documented** your configuration in your report.
+
 
 ## Additional steps to get extra points on top of the "base" grade
 
