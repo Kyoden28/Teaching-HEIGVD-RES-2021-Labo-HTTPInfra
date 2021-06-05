@@ -24,7 +24,7 @@ Le dossier **src** contient les fichiers nécessaires pour la page html qui sera
 
 Deux scripts sont présents afin de lancer l'image : 
 
-`build_image_docker.s`h permet de build l'image avec un tag défini. 
+`build_image_docker.sh` permet de build l'image avec un tag défini. 
 
 ```bash
 docker build --tag  res/static_http_server .
