@@ -28,9 +28,7 @@ The third objective is to practice our usage of **Docker**. All the components o
 
 ## Etape 1: Static HTTP server with apache httpd
 
-Cette étape consiste à la création d'un serveur HTTP statique. Le but est de dockériser une image apache, où nous avons décidé d'utiliser la version 8.0. Nous sommes partis d'une image php trouvé sur le site 
-
-[dockerhub]: https://hub.docker.com/_/php	"dockerhub"
+Cette étape consiste à la création d'un serveur HTTP statique. Le but est de dockériser une image apache, où nous avons décidé d'utiliser la version 8.0. Nous sommes partis d'une image php trouvé sur le site dockerhub. 
 
 Le dossier **Static_HTTP_Server** contient les fichiers nécessaires à cette partie. 
 
@@ -50,11 +48,7 @@ run_docker.sh permet de démarrer en background le container.
 docker run -d --name apache_static res/static_http_server
 ```
 
-Pour la partie 1 et afin de faciliter l'accès à la page HTML que nous avons modifié pour la démonstration, on peut lancer le script de cette manière et accèder en 
-
-[localhost]: http://localhost:8080/
-
-sur le port 8080. 
+Pour la partie 1 et afin de faciliter l'accès à la page HTML que nous avons modifié pour la démonstration, on peut lancer le script de cette manière et accèder en localhost sur le port 8080. 
 
 ```bash
 docker run -d -p 8080:80 --name apache_static res/static_http_server
@@ -68,11 +62,7 @@ docker run -d -p 8080:80 --name apache_static res/static_http_server
 
 Cette étape consiste à la création d'un serveur HTTP dynamique avec l'utilisation du framework express.js qui est utile à la construction d'application web basées sur node.js. L'objectif est de retourner une liste aleatoire d'objets en json utiles aux prochaines étapes. Nous utilisons dans le Dockerfile la dernière image de node avec node:latest.
 
-Nous avons utilisé **dummy-json** pour cela. Plus d'informations sur ce 
-
-[github]: https://github.com/webroo/dummy-json
-
-. 
+Nous avons utilisé **dummy-json** pour cela. Plus d'informations sur ce lien https://github.com/webroo/dummy-json 
 
 On génére simplement 5 personnes avec les données "Firstname,Lastname,Age,Company,Email,Street,City et Country" en json. 
 
@@ -94,11 +84,7 @@ run_docker.sh permet de démarrer en background le container.
 docker run -d --name express_dynamic res/dynamic_http_server
 ```
 
-Pour la partie 2 et afin de faciliter l'accès aux données que nous générons pour la démonstration, on peut lancer le script de cette manière et accèder en 
-
-[localhost]: http://localhost:3000/
-
-sur le port 3000. 
+Pour la partie 2 et afin de faciliter l'accès aux données que nous générons pour la démonstration, on peut lancer le script de cette manière et accèder en localhost sur le port 3000.
 
 ```bash
 docker run -d -p 3000:3000 --name express_dynamic res/dynamic_http_server
@@ -112,6 +98,8 @@ docker run -d -p 3000:3000 --name express_dynamic res/dynamic_http_server
 ## Step 3: Reverse proxy with apache (static configuration)
 
 Cette étape consiste à la création d'un reverse proxy où le but est d'avoir accès au serveur statique et au serveur dynamique via le reverse proxy. L'objectif par rapport aux deux étapes précédentes sera de ne pas utiliser de port mapping pour l'accès au container mais uniquement via le reverse proxy.
+
+Pour la configuration du lien labores.demo.ch , il faudra aller modifier dans le fichier hosts, la redirection du lien labores.demo.ch qui correspond à l'adresse 127.0.0.1 avec l'utilisation de Docker Desktop. 
 
 L'accès à l'étape 1 et 2 se fera via le lien labores.demo.ch qui a été configuré pour accèder à la partie : 
 
@@ -156,13 +144,13 @@ Dans le dossier Static_HTTP_Server/src/js , réaliser le script people.js.
 
 ## Step 5: Dynamic reverse proxy configuration
 
-Cette partie concerne le problème d'adresse IP hardcodé qui n'est pas viable dans un envirronnement de production. Nous voulons changer les adresses IP, sans modifier trop de configurations. Pour cela, nous allons utiliser un système de variable d'envirronnement qui lors du lancement du container nous permet d'indiquer clairement les adresses utiles.
+Cette partie concerne le problème d'adresse IP hardcodé qui n'est pas viable dans un environnement de production. Nous voulons changer les adresses IP, sans modifier trop de configurations. Pour cela, nous allons utiliser un système de variable d'envirronnement qui lors du lancement du container nous permet d'indiquer clairement les adresses utiles. Nous utilisons toujours une image php:apache version 8.0 
 
 Dans l'étape précédente, la configuration du reverse proxy était le fichier **001-reverse-proxy.conf**. Ici nous allons créer ce fichier de configuration à l'aide d'un script php. 
 
-Ce fichier se trouve dans Revese_Proxy/template/config-template.php. Celui-ci va permettre de récupèrer les variables d'envirronement crée au moment du lancement du container. 
+Ce fichier se trouve dans Reverse_Proxy/template/config-template.php. Celui-ci va permettre de récupèrer les variables d'envirronement crée au moment du lancement du container. 
 
-
+Le Dockerfile configure le container docker en copiant les fichiers utiles dans le container afin que la configuration du serveur apache soit bonne.
 
 ## Additional steps to get extra points on top of the "base" grade
 
@@ -187,8 +175,19 @@ Ce fichier se trouve dans Revese_Proxy/template/config-template.php. Celui-ci va
 * You describe your approach (are you implementing a discovery protocol based on UDP multicast? are you using a tool such as serf?)
 * You have documented your configuration and your validation procedure in your report.
 
-### Management UI (0.5 pt)
+### Bonus : Management UI (0.5 pt)
 
-* You develop a web app (e.g. with express.js) that administrators can use to monitor and update your web infrastructure.
-* You find a way to control your Docker environment (list containers, start/stop containers, etc.) from the web app. For instance, you use the Dockerode npm module (or another Docker client library, in any of the supported languages).
-* You have documented your configuration and your validation procedure in your report.
+En faisant quelques recherches sur internet, nous sommes tombés sur Portainer. Nous avons alors décidé d'utiliser cette plateforme pour le management UI. 
+
+Pour commencer il faut avoir : 
+
+- Pull l'image portainer-ce via la commande :
+
+  > docker pull portainer/portainer-ce
+
+- Lancer l'interface web via localhost:9000
+
+Et nous avons ainsi accès en webapp à la platerforme qui nous donne pleins de fonctionnalités pour manipuler les différents containers/images. 
+
+![](img/portainerdemo.png)
+
