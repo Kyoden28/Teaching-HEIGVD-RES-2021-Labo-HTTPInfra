@@ -152,14 +152,71 @@ Ce fichier se trouve dans Reverse_Proxy/template/config-template.php. Celui-ci v
 
 Le Dockerfile configure le container docker en copiant les fichiers utiles dans le container afin que la configuration du serveur apache soit bonne.
 
-## Additional steps to get extra points on top of the "base" grade
 
-### Load balancing: multiple server nodes (0.5pt)
 
-* You extend the reverse proxy configuration to support **load balancing**. 
-* You show that you can have **multiple static server nodes** and **multiple dynamic server nodes**. 
-* You prove that the **load balancer** can distribute HTTP requests between these nodes.
-* You have **documented** your configuration and your validation procedure in your report.
+## Bonus : Load balancing - multiple server nodes 
+
+Pour réaliser le load balancing sur notre serveur apache , la documentation sur le lien suivant nous indique les principales informations : 
+
+https://httpd.apache.org/docs/2.4/fr/mod/mod_proxy_balancer.html
+
+Dans notre cas, il a fallu modifier quelques fichiers : 
+
+Le Dockerfile du reverse_proxy avec l'ajout de deux modules
+
+> RUN a2enmod proxy proxy_http **proxy_balancer** **lbmethod_byrequests**
+
+**Remarque :** lbmethod_byrequests a du être ajouté suite à une erreur présente dans les logs. Ce module n'a pas l'air necessaire dans toutes les versions d'apache. Dans notre cas, nous sommes en version 8.0 
+
+Le fichier apache2_foreground a été modifié afin d'ajouter l'écho des variables d'environnements. 
+
+
+
+Pour prendre en compte l'ajout du module proxy_balancer , nous avons modifié le fichier template de configuration avec l'ajout de la lecture des variables d'envirronement et l'ajout des balises <Proxy> avec les paramètres BalancerMember. 
+
+```php
+<?php	
+	$ip_static = getenv('STATIC_APP');	
+	$ip_dynamic = getenv('DYNAMIC_APP');	
+	$ip_static2 = getenv('STATIC_APP2');	
+	$ip_dynamic2 = getenv('DYNAMIC_APP2');	
+?>
+<VirtualHost *:80>
+
+	ServerName labores.demo.ch
+	
+	<Proxy balancer://myclusterdynamic>
+		BalancerMember 'http://<?php print "$ip_dynamic"?>'
+		BalancerMember 'http://<?php print "$ip_dynamic2"?>'
+	</Proxy>
+	
+	<Proxy balancer://myclusterstatic>
+		BalancerMember 'http://<?php print "$ip_static"?>'
+		BalancerMember 'http://<?php print "$ip_static2"?>'
+	</Proxy>
+	
+	ProxyPass '/api/people/' 'balancer://myclusterdynamic/'
+	ProxyPassReverse '/api/people/' 'balancer://myclusterdynamic/'
+	
+	ProxyPass '/' 'balancer://myclusterstatic/'
+	ProxyPassReverse '/' 'balancer://myclusterstatic/'
+	
+</VirtualHost>
+```
+
+Pour la démonstration, nous avons modifié le script :
+
+> ./lauchReverseProxy_withAll.sh
+
+afin d'ajouter la création de deux serveurs statiques et dynamiques. 
+
+Pour tester le load balancer , nous nous sommes servis de l'implémentation du Management_UI pour modifier directement via l'application web le contenu HTML de notre serveur. 
+
+Example : 
+
+![](img/timeless2.PNG)
+
+
 
 ### Load balancing: round-robin vs sticky sessions (0.5 pt)
 
@@ -175,7 +232,7 @@ Le Dockerfile configure le container docker en copiant les fichiers utiles dans 
 * You describe your approach (are you implementing a discovery protocol based on UDP multicast? are you using a tool such as serf?)
 * You have documented your configuration and your validation procedure in your report.
 
-### Bonus : Management UI (0.5 pt)
+## Bonus : Management UI (0.5 pt)
 
 En faisant quelques recherches sur internet, nous sommes tombés sur Portainer. Nous avons alors décidé d'utiliser cette plateforme pour le management UI. 
 
@@ -185,9 +242,12 @@ Pour commencer il faut avoir :
 
   > docker pull portainer/portainer-ce
 
+- Lancer la commande 
+
+  > docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce
+
 - Lancer l'interface web via localhost:9000
 
 Et nous avons ainsi accès en webapp à la platerforme qui nous donne pleins de fonctionnalités pour manipuler les différents containers/images. 
 
 ![](img/portainerdemo.png)
-
