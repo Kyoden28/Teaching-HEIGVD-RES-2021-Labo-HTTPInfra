@@ -4,27 +4,7 @@ Auteurs : Christian Gomes & Johann Werkle
 
 Date : 05.06.2021
 
-## Objectives
-
-The first objective of this lab is to get familiar with software tools that will allow us to build a **complete web infrastructure**. By that, we mean that we will build an environment that will allow us to serve **static and dynamic content** to web browsers. To do that, we will see that the **apache httpd server** can act both as a **HTTP server** and as a **reverse proxy**. We will also see that **express.js** is a JavaScript framework that makes it very easy to write dynamic web apps.
-
-The second objective is to implement a simple, yet complete, **dynamic web application**. We will create **HTML**, **CSS** and **JavaScript** assets that will be served to the browsers and presented to the users. The JavaScript code executed in the browser will issue asynchronous HTTP requests to our web infrastructure (**AJAX requests**) and fetch content generated dynamically.
-
-The third objective is to practice our usage of **Docker**. All the components of the web infrastructure will be packaged in custom Docker images (we will create at least 3 different images).
-
-## General instructions
-
-* This is a **BIG** lab and you will need a lot of time to complete it. 
-* We have prepared webcasts for a big portion of the lab (**what can get you the "base" grade of 4.5**).
-* Be aware that the webcasts have been recorded in 2016. There is no change in the list of tasks to be done, but of course **there are some differences in the details**. For instance, the Docker images that we use to implement the solution have changed a bit and you will need to do **some adjustments to the scripts**. This is part of the work and we ask you to document what the required adaptations in your report.
-* The webcasts present one solution. Feeling adventurous and want to propose another one (for instance, by using nginx instead apache httpd, or django instead of express.js)? Go ahead, we **LOVE** that. Make sure to document your choices in the report. If you are not sure if your choice is compatible with the list of acceptance criteria? Not sure about what needs to be done to get the extra points? Reach out to the teaching team. **Learning to discuss requirements with a "customer"** (even if this one pays you with a grade and not with money) is part of the process!
-* To get **additional points**, you will need to do research in the documentation by yourself (we are here to help, but we will not give you step-by-step instructions!). To get the extra points, you will also need to be creative (do not expect complete guidelines).
-* The lab can be done in **groups of 2 students**. You will learn very important skills and tools, which you will need to next year's courses. You cannot afford to skip this content if you want to survive next year. Essentially, this means that it's a pretty bad idea to only have one person in the group doing the job...
-* Read carefully all the **acceptance criteria**.
-* We will request demos as needed. When you do your **demo**, be prepared to that you can go through the procedure quickly (there are a lot of solutions to evaluate!)
-* **You have to write a report. Please do that directly in the repo, in one or more markdown files. Start in the README.md file at the root of your directory.**
-* The report must contain the procedure that you have followed to prove that your configuration is correct (what you would do if you were doing a demo).
-* Check out the **due dates** on the main repo for the course.
+Introduction
 
 ## Etape 1: Static HTTP server with apache httpd
 
@@ -152,7 +132,25 @@ Ce fichier se trouve dans Reverse_Proxy/template/config-template.php. Celui-ci v
 
 Le Dockerfile configure le container docker en copiant les fichiers utiles dans le container afin que la configuration du serveur apache soit bonne.
 
+## Bonus : Management UI 
 
+En faisant quelques recherches sur internet, nous sommes tombés sur Portainer. Nous avons alors décidé d'utiliser cette plateforme pour le management UI. 
+
+Pour commencer il faut avoir : 
+
+- Pull l'image portainer-ce via la commande :
+
+  > docker pull portainer/portainer-ce
+
+- Lancer la commande 
+
+  > docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce
+
+- Lancer l'interface web via localhost:9000
+
+Et nous avons ainsi accès en webapp à la platerforme qui nous donne pleins de fonctionnalités pour manipuler les différents containers/images. 
+
+![](img/portainerdemo.png)
 
 ## Bonus : Load balancing - multiple server nodes 
 
@@ -216,38 +214,54 @@ Example :
 
 ![](img/timeless2.PNG)
 
+## Bonus : Load balancing: round-robin vs sticky sessions
 
+Nous avons mis en place cette fonctionnalité de la manière suivante : 
 
-### Load balancing: round-robin vs sticky sessions (0.5 pt)
+- Modification du fichier `.Reverse_Proxy\templates` afin d'y inclure la configuration recommandée par [httpd.apache.org](https://httpd.apache.org/docs/2.4/fr/mod/mod_proxy_balancer.html) : 
 
-* You do a setup to demonstrate the notion of sticky session.
-* You prove that your load balancer can distribute HTTP requests in a round-robin fashion to the dynamic server nodes (because there is no state).
-* You prove that your load balancer can handle sticky sessions when forwarding HTTP requests to the static server nodes.
-* You have documented your configuration and your validation procedure in your report.
+```php+HTML
+<?php	
+	$ip_static = getenv('STATIC_APP');	
+	$ip_dynamic = getenv('DYNAMIC_APP');	
+	$ip_static2 = getenv('STATIC_APP2');	
+	$ip_dynamic2 = getenv('DYNAMIC_APP2');	
+?>
+<VirtualHost *:80>
+ServerName labores.demo.ch
 
-### Dynamic cluster management (0.5 pt)
+<Proxy balancer://myclusterdynamic>
+	BalancerMember 'http://<?php print "$ip_dynamic"?>'
+	BalancerMember 'http://<?php print "$ip_dynamic2"?>'
+</Proxy>
+Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
+<Proxy balancer://myclusterstatic>
+	BalancerMember 'http://<?php print "$ip_static"?>' route=1
+	BalancerMember 'http://<?php print "$ip_static2"?>' route=2
+	ProxySet stickysession=ROUTEID
+</Proxy>
+ProxyPass '/api/people/' 'balancer://myclusterdynamic/'
+ProxyPassReverse '/api/people/' 'balancer://myclusterdynamic/'
 
-* You develop a solution, where the server nodes (static and dynamic) can appear or disappear at any time.
-* You show that the load balancer is dynamically updated to reflect the state of the cluster.
-* You describe your approach (are you implementing a discovery protocol based on UDP multicast? are you using a tool such as serf?)
-* You have documented your configuration and your validation procedure in your report.
+ProxyPass '/' 'balancer://myclusterstatic/'
+ProxyPassReverse '/' 'balancer://myclusterstatic/'
+</VirtualHost>
+```
 
-## Bonus : Management UI (0.5 pt)
+On notera l'ajout des lignes "Header add Set-Cookie[...]" et "ProxySet stickysession = ROUTEID" et les paramètres ajouté au terme des lignes "BalanceMember" de la partie statique.
 
-En faisant quelques recherches sur internet, nous sommes tombés sur Portainer. Nous avons alors décidé d'utiliser cette plateforme pour le management UI. 
+Nous avons également activé le module "header" dans la configuration d'apache, consultable dans le Dockerfile du Reverse_Proxy.
 
-Pour commencer il faut avoir : 
+### Validation:
 
-- Pull l'image portainer-ce via la commande :
+La validation a été effectuée de manière très visuelle car nous avons lancé deux instance d'un même navigateur jusqu'à avoir deux accès différents à notre infrastructure web : (à nouveau, nous nous sommes servi de Portainer afin de singulariser un des deux fichiers `index.html` afin de les distinguer plus aisément)
 
-  > docker pull portainer/portainer-ce
+![timelesssticky](.\img\timelesssticky.PNG)
 
-- Lancer la commande 
+Une fois cet accès effectué, nous avons rechargé la page un certain nombre de fois en remarquant que nous restions toujours sur le même accès statique.
 
-  > docker run -d -p 8000:8000 -p 9000:9000 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce
+D'autre part, nous avons effectué un `wget -S http://labores.demo.ch:8080` et avons obtenu le résultat suivant : 
 
-- Lancer l'interface web via localhost:9000
+![wgetcapture](.\img\wgetcapture.PNG)
 
-Et nous avons ainsi accès en webapp à la platerforme qui nous donne pleins de fonctionnalités pour manipuler les différents containers/images. 
-
-![](img/portainerdemo.png)
+Ce qui nous permet de voir que ROUTEID a bien été défini dans le header Set-Cookie.

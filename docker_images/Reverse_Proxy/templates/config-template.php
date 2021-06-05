@@ -7,17 +7,17 @@
 <VirtualHost *:80>
 
 	ServerName labores.demo.ch
-	
+
 	<Proxy balancer://myclusterdynamic>
 		BalancerMember 'http://<?php print "$ip_dynamic"?>'
 		BalancerMember 'http://<?php print "$ip_dynamic2"?>'
 	</Proxy>
-	
+	Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
 	<Proxy balancer://myclusterstatic>
-		BalancerMember 'http://<?php print "$ip_static"?>'
-		BalancerMember 'http://<?php print "$ip_static2"?>'
+		BalancerMember 'http://<?php print "$ip_static"?>' route=1
+		BalancerMember 'http://<?php print "$ip_static2"?>' route=2
+		ProxySet stickysession=ROUTEID
 	</Proxy>
-	
 	ProxyPass '/api/people/' 'balancer://myclusterdynamic/'
 	ProxyPassReverse '/api/people/' 'balancer://myclusterdynamic/'
 	
