@@ -258,12 +258,12 @@ Nous avons également activé le module `header` dans la configuration d'apache,
 
 La validation a été effectuée de manière très visuelle car nous avons lancé deux instances d'un même navigateur jusqu'à avoir deux accès différents à notre infrastructure web : (à nouveau, nous nous sommes servi de Portainer afin de singulariser un des deux fichiers `index.html` afin de les distinguer plus aisément)
 
-![timelesssticky](.\img\timelesssticky.PNG)
+![](img/timelesssticky.PNG)
 
 Une fois cet accès effectué, nous avons rechargé la page un certain nombre de fois en remarquant que nous restions toujours sur le même accès statique.
 
 D'autre part, nous avons effectué un `wget -S http://labores.demo.ch:8080` et avons obtenu le résultat suivant : 
 
-![wgetcapture](.\img\wgetcapture.PNG)
+![](img/wgetcapture.PNG)
 
 Ce qui nous permet de voir que `ROUTEID` a bien été défini dans le header `Set-Cookie`.
