@@ -4,8 +4,6 @@ Auteurs : Christian Gomes & Johann Werkle
 
 Date : 05.06.2021
 
-
-
 ## Objectives
 
 The first objective of this lab is to get familiar with software tools that will allow us to build a **complete web infrastructure**. By that, we mean that we will build an environment that will allow us to serve **static and dynamic content** to web browsers. To do that, we will see that the **apache httpd server** can act both as a **HTTP server** and as a **reverse proxy**. We will also see that **express.js** is a JavaScript framework that makes it very easy to write dynamic web apps.
@@ -32,7 +30,7 @@ The third objective is to practice our usage of **Docker**. All the components o
 
 Cette étape consiste à la création d'un serveur HTTP statique. Le but est de dockériser une image apache, où nous avons décidé d'utiliser la version 8.0. Nous sommes partis d'une image php trouvé sur le site 
 
-[dockerhub]: https://hub.docker.com/_/php
+[dockerhub]: https://hub.docker.com/_/php	"dockerhub"
 
 Le dossier **Static_HTTP_Server** contient les fichiers nécessaires à cette partie. 
 
