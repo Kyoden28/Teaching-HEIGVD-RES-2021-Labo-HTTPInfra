@@ -30,7 +30,7 @@ Deux scripts sont présents afin de lancer l'image :
 docker build --tag  res/static_http_server .
 ```
 
-`run_docker.sh -d` permet de démarrer en background le container. 
+`run_docker.sh` permet de démarrer en background le container. 
 
 ```bash
 docker run -d --name apache_static res/static_http_server
